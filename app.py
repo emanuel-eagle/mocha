@@ -1,26 +1,25 @@
+import yaml
 import streamlit as st
 from utilities.SmartDevice import SmartDevice
 from utilities.FuzzyMatching import FuzzyMatching
 from utilities.OllamaChat import OllamaChat
 
-FUZZY_MATCH_THRESHOLD = 50
-TITLE = "Mocha"
-CAPTION = "Smart Home Assistant"
-MODEL = "qwen2.5:14b"
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
 
 @st.cache_resource
 def init_services():
     devices = SmartDevice()
     fuzzy_matching = FuzzyMatching()
     available_devices = devices.list_devices()
-    fuzzy_matching.set_threshold(FUZZY_MATCH_THRESHOLD)
+    fuzzy_matching.set_threshold(config["FUZZY_MATCH_THRESHOLD"])
     fuzzy_matching.set_items(available_devices)
-    return OllamaChat(devices, fuzzy_matching, model=MODEL)
+    return OllamaChat(devices, fuzzy_matching, model=config["MODEL"])
 
 ollama_chat = init_services()
 
-st.title(TITLE)
-st.caption(CAPTION)
+st.title(config["TITLE"])
+st.caption(config["CAPTION"])
 
 if "messages" not in st.session_state:
     greeting = ollama_chat.greet()

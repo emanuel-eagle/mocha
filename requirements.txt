@@ -15,6 +15,7 @@ pycparser==3.0
 python-kasa==0.10.2
 RapidFuzz==3.14.3
 typing_extensions==4.15.0
+PyYAML
 requests
 streamlit
 yarl==1.22.0

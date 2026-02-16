@@ -3,7 +3,7 @@ from utilities.SmartDevice import SmartDevice
 from utilities.FuzzyMatching import FuzzyMatching
 from utilities.OllamaChat import OllamaChat
 
-FUZZY_MATCH_THRESHOLD = 60
+FUZZY_MATCH_THRESHOLD = 50
 TITLE = "Mocha"
 CAPTION = "Smart Home Assistant"
 MODEL = "qwen2.5:14b"

@@ -1,5 +1,5 @@
 import asyncio
-from kasa import Discover
+from kasa import Discover, Module
 import logging
 
 class SmartDevice:
@@ -45,7 +45,8 @@ class SmartDevice:
         if self.light_exists(light):
             light_obj = self.device_map[light]
             await light_obj.update()
-            await light_obj.set_brightness(brightness)
+            light_module = light_obj.modules[Module.Light]
+            await light_module.set_brightness(brightness)
             return f"Set brightness of {light} to {brightness}%"
         else:
             logging.error(f"{light} not found in discovered devices.")
@@ -55,7 +56,8 @@ class SmartDevice:
         if self.light_exists(light):
             light_obj = self.device_map[light]
             await light_obj.update()
-            await light_obj.set_hsv(hue, saturation, value)
+            light_module = light_obj.modules[Module.Light]
+            await light_module.set_hsv(hue, saturation, value)
             return f"Set color of {light} to HSV({hue}, {saturation}, {value})"
         else:
             logging.error(f"{light} not found in discovered devices.")
@@ -82,11 +84,10 @@ class SmartDevice:
     async def _blink_effect(self, light, seconds):
         if self.light_exists(light):
             light_obj = self.device_map[light]
-            for i in range(seconds):
-                await light_obj.update()
+            await light_obj.update()
+            for _ in range(seconds):
                 await light_obj.turn_on()
                 await asyncio.sleep(0.5)
-                await light_obj.update()
                 await light_obj.turn_off()
                 await asyncio.sleep(0.5)
             return f"Blinked {light} for {seconds} seconds"

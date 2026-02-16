@@ -128,7 +128,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "blink_effect",
-            "description": "Blink a smart light on and off repeatedly. The seconds parameter must be in seconds. Convert any time the user provides to seconds (e.g. '2 minutes' = 120, '30 seconds' = 30, '1 hour' = 3600). Use search_devices first to resolve device names to IPs.",
+            "description": "Blink a smart light on and off repeatedly. This only handles the on/off blinking — if the user wants a specific color while blinking, call adjust_hue BEFORE calling blink_effect. The seconds parameter must be in seconds. Convert any time the user provides to seconds (e.g. '2 minutes' = 120, '30 seconds' = 30, '1 hour' = 3600). Use search_devices first to resolve device names to IPs.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -152,6 +152,7 @@ class OllamaChat:
 
     SYSTEM_PROMPT = (
         "You are a smart home assistant called Mocha. You control smart lights and devices. "
+        "Exclude any device with the word 'plug' from your actions."
         "When a user asks you to control a device, you MUST use your tools. "
         "Always use search_devices first to find matching device IPs, then use power_light or light_status for each IP returned. "
         "When the user asks about the status of lights (e.g. 'is the bedroom light on?', 'which lights are off?'), use search_devices or list_devices to get the IPs, then call light_status for each one. "

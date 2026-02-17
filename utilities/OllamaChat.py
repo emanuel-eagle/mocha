@@ -195,10 +195,9 @@ class OllamaChat:
         response.raise_for_status()
         return response.json()["message"]
 
-    def _execute_tool(self, name, args):
+    async def _execute_tool(self, name, args):
         if name == "list_devices":
-            devices = self.smart_device.list_devices()
-            return str(devices)
+            return str(self.smart_device.list_devices())
 
         elif name == "search_devices":
             results = self.fuzzy_matching.fuzzy_search(args["query"])
@@ -209,22 +208,35 @@ class OllamaChat:
             return str(matched)
 
         elif name == "power_light":
-            self.smart_device.power_light(args["requested_status"], args["light"])
+            await self.smart_device._power_light(args["requested_status"], args["light"])
             return f"Turned {args['requested_status']} light at {args['light']}"
 
         elif name == "light_status":
-            return self.smart_device.light_status(args["light"])
+            return await self.smart_device._light_status(args["light"])
 
         elif name == "adjust_brightness":
-            return self.smart_device.adjust_brightness(args["light"], args["brightness"])
+            return await self.smart_device._adjust_brightness(args["light"], args["brightness"])
 
         elif name == "adjust_hue":
-            return self.smart_device.adjust_hue(args["light"], args["hue"], args["saturation"], args["value"])
+            return await self.smart_device._adjust_hue(args["light"], args["hue"], args["saturation"], args["value"])
 
         elif name == "blink_effect":
-            return self.smart_device.blink_effect(args["light"], args["seconds"])
+            return await self.smart_device._blink_effect(args["light"], args["seconds"])
 
         return f"Unknown tool: {name}"
+
+    def _execute_tools(self, tool_calls):
+        import asyncio
+        asyncio.set_event_loop(self.smart_device._loop)
+
+        coros = []
+        for tool_call in tool_calls:
+            name = tool_call["function"]["name"]
+            args = tool_call["function"]["arguments"]
+            logging.debug(f"Tool call: {name}, args: {args}")
+            coros.append(self._execute_tool(name, args))
+
+        return self.smart_device._loop.run_until_complete(asyncio.gather(*coros))
 
     def chat(self, user_message, on_status=None):
         self.messages.append({"role": "user", "content": user_message})
@@ -238,12 +250,9 @@ class OllamaChat:
 
             self.messages.append(response)
 
-            for tool_call in response["tool_calls"]:
-                name = tool_call["function"]["name"]
-                args = tool_call["function"]["arguments"]
-                logging.debug(f"Tool call: {name}, args: {args}")
-                result = self._execute_tool(name, args)
-                self.messages.append({"role": "tool", "content": result})
+            results = self._execute_tools(response["tool_calls"])
+            for result in results:
+                self.messages.append({"role": "tool", "content": str(result)})
 
             response = self._call_ollama(self.messages)
 
